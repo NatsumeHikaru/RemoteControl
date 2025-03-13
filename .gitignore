@@ -1,0 +1,7 @@
+/RemoteControl/.vs/
+/RemoteControl/Debug/
+*.user
+*.suo
+*.db
+*.ipch
+*.obj

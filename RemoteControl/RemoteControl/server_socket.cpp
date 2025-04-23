@@ -58,13 +58,23 @@ bool server_socket::accept_client() {
 }
 
 int server_socket::deal_cmd() {
-	if (m_client == -1) return failure;
-	char buffer[1025] = "";
+	if (m_client == -1) return -1;
+	char* buffer = new char[buffer_size];
+	memset(buffer, 0, buffer_size);
+	size_t index = 0;
 	while (true) {
-		int len = recv(m_client, buffer, sizeof(buffer), 0);
+		size_t len = recv(m_client, buffer + index, buffer_size - index, 0);
 		if (len < 0) return -1;
-		// todo
+		m_packet = packet((BYTE*)buffer,len);
+		index += len;
+		len = index;
+		if (len > 0) {
+			memmove(buffer, buffer + len, buffer_size - len);
+			index -= len;
+			return m_packet.cmd;
+		}
 	}
+	return -1;
 }
 
 bool server_socket::send_msg(const char* data, int size) {

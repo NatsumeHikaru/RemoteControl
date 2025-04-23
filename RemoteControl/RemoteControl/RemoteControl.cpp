@@ -35,31 +35,27 @@ int main()
         else
         {
              
-            // TODO: socket,bind,listen,accept,read,write,close
+            // TODO
+            server_socket* p_server = server_socket::get_instance();
+            if (p_server->init_socket() == failure) {
+                MessageBox(NULL, _T("网络初始化异常，请检查网络状态！"), _T("网络初始化失败"), MB_OK | MB_ICONERROR);
+                exit(0);
+            }
 
-            SOCKET serv_socket = socket(PF_INET, SOCK_STREAM, 0); // todo : check success or fail
+            int cnt = 0;
+            while (server_socket::get_instance() != NULL) {
+ 
+                if (p_server->accept_client() == failure) {
+                    if (cnt >= 3) {
+                        MessageBox(NULL, _T("多次重试无法连接"), _T("接入用户失败"), MB_OK | MB_ICONERROR);
+                        exit(0);
+                    }
+                    MessageBox(NULL, _T("接入用户失败，正在自动重试"), _T("接入用户失败"), MB_OK | MB_ICONERROR);
+                    cnt++;
+                }
+                int ret = p_server->deal_cmd(); // todo
+            }
             
-            // init server address
-            sockaddr_in serv_addr, client_addr;
-            memset(&serv_addr, 0, sizeof(serv_addr));
-            serv_addr.sin_family = PF_INET;
-            serv_addr.sin_addr.S_un.S_addr = INADDR_ANY; // listen all ip address
-            serv_addr.sin_port = htons(9555); // connect port
-            // bind
-            bind(serv_socket, (sockaddr*)&serv_addr, sizeof(serv_addr)); // todo : check return value
-            // listen
-            listen(serv_socket, 1);
-            // accept
-            int cli_size = sizeof(client_addr);
-            SOCKET client = accept(serv_socket, (sockaddr*)&client_addr, &cli_size);
-            // read
-            char buffer[1024];
-            recv(client, buffer, sizeof(buffer),0);
-            // write
-            send(client, buffer, sizeof(buffer), 0);
-            // close
-            closesocket(serv_socket);
-            WSACleanup();
         }
     }
     else

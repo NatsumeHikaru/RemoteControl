@@ -3,8 +3,8 @@
 
 #include "pch.h"
 #include "framework.h"
-#include "RemoteControl.h"
 #include "server_socket.h"
+#include "direct.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -20,7 +20,17 @@
 
 CWinApp theApp;
 
-using namespace std;
+std::string get_driver_info() {
+    std::string res;
+    for (int i = 1; i <= 26; ++i)
+        if (_chdrive(i) == 0) {
+            if (res.size()) res += ',';
+            res += 'A' + i - 1;
+        }
+    packet pack(1, (BYTE*)res.c_str(), res.size());
+    server_socket::get_instance()->send_msg(pack);
+    return res;
+}
 
 int main()
 {
@@ -41,6 +51,7 @@ int main()
         {
              
             // TODO
+            /*
             server_socket* p_server = server_socket::get_instance();
             if (p_server->init_socket() == failure) {
                 MessageBox(NULL, _T("网络初始化异常，请检查网络状态！"), _T("网络初始化失败"), MB_OK | MB_ICONERROR);
@@ -60,7 +71,15 @@ int main()
                 }
                 int ret = p_server->deal_cmd(); // todo
             }
-            
+            */
+            int op = 1;
+            switch (op) {
+            case 1:
+                get_driver_info();
+            default:
+                break;
+            }
+
         }
     }
     else

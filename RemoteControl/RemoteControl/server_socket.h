@@ -3,6 +3,8 @@
 #include "pch.h"
 #include "framework.h"
 
+#define debug(x) OutputDebugString(_T(x))
+
 static bool failure = FALSE;
 static bool success = TRUE;
 static int buffer_size = 4096;
@@ -61,4 +63,5 @@ public:
 	int deal_cmd();
 	bool send_msg(const char* data, int size);
 	bool send_msg(packet& pack);
+	bool get_file_path(std::string& path_str);
 };

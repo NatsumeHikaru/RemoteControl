@@ -87,6 +87,14 @@ bool server_socket::send_msg(packet& pack) {
 	return send(m_client, pack.get_data(), pack.get_size(), 0) > 0;
 }
 
+bool server_socket::get_file_path(std::string& path_str) {
+	if (m_packet.cmd == 2) {
+		path_str = m_packet.str_data; // get file list
+		return success;
+	}
+	return failure;
+}
+
 // private
 server_socket::server_socket(const server_socket& ss) {
 	m_socket = ss.m_socket;

@@ -5,6 +5,8 @@
 #include "framework.h"
 #include "server_socket.h"
 #include "direct.h"
+#include "io.h"
+#include <list>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -30,6 +32,61 @@ std::string get_driver_info() {
     packet pack(1, (BYTE*)res.c_str(), res.size());
     server_socket::get_instance()->send_msg(pack);
     return res;
+}
+
+typedef struct file_info{
+    file_info() {
+        is_invalid = 0;
+        is_directory = -1;
+        next = 1;
+        memset(file_name, 0, sizeof(file_name));
+    }
+    bool is_invalid;
+    char file_name[256];
+    bool is_directory; // 0:is not a directory 1:is 
+    bool next;
+}FILEINFO,*PFILEINFO;
+
+int get_directory_info() {
+    std::string path_str;
+    std::list<FILEINFO> file_info_list;
+    if (server_socket::get_instance()->get_file_path(path_str) == failure) {
+        debug("命令解析错误");
+        return -1;
+    }
+    if (_chdir(path_str.c_str())) {
+        FILEINFO finfo;
+        finfo.is_invalid = 1;
+        finfo.is_directory = 1;
+        finfo.next = 0;
+        memcpy(finfo.file_name, path_str.c_str(), path_str.size());
+        //file_info_list.push_back(finfo);
+        packet pack(2, (BYTE*)&finfo, sizeof(finfo));
+        server_socket::get_instance()->send_msg(pack);
+        debug("无权访问目录");
+        return -2;
+    }
+    _finddata_t find_data;
+    int find = 0;
+    if ((find = _findfirst("*",&find_data)) == -1) {
+        debug("未找到文件");
+        return -3;
+    }
+    do {
+        FILEINFO finfo;
+        finfo.is_directory = (find_data.attrib & _A_SUBDIR) != 0;
+        memcpy(finfo.file_name, find_data.name, strlen(find_data.name));
+        //file_info_list.push_back(finfo);
+        packet pack(2, (BYTE*)&finfo, sizeof(finfo));
+        server_socket::get_instance()->send_msg(pack);
+    } while (!_findnext(find, &find_data));
+
+    FILEINFO finfo;
+    finfo.next = 0;
+    packet pack(2, (BYTE*)&finfo, sizeof(finfo));
+    server_socket::get_instance()->send_msg(pack);
+
+    return 0;
 }
 
 int main()
@@ -76,6 +133,10 @@ int main()
             switch (op) {
             case 1:
                 get_driver_info();
+                break;
+            case 2:
+                get_directory_info();
+                break;
             default:
                 break;
             }
